@@ -11,6 +11,8 @@ import {
   FiHelpCircle,
   FiLogOut,
   FiHome,
+  FiMenu,
+  FiX,
 } from "react-icons/fi";
 
 import { auth } from "@/lib/firebase";
@@ -26,6 +28,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Book[]>([]);
   const [searching, setSearching] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!search.trim()) {
@@ -70,20 +73,58 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   };
 
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="app__layout">
-      <aside className="sidebar">
-        <div className="sidebar__logo">
-          <img src="/assets/logo.png" alt="Summarist logo" />
+      <button
+        className="mobile-menu__button"
+        onClick={() => setSidebarOpen(true)}
+        aria-label="Open sidebar"
+      >
+        <FiMenu />
+      </button>
+
+      {sidebarOpen && (
+        <div
+          className="sidebar__overlay"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside className={`sidebar ${sidebarOpen ? "sidebar--open" : ""}`}>
+        <div className="sidebar__top">
+          <div className="sidebar__logo">
+            <img src="/assets/logo.png" alt="Summarist logo" />
+          </div>
+
+          <button
+            className="sidebar__close"
+            onClick={closeSidebar}
+            aria-label="Close sidebar"
+          >
+            <FiX />
+          </button>
         </div>
 
         <nav className="sidebar__nav">
-          <Link href="/for-you" className="sidebar__link">
+          <Link
+            href="/for-you"
+            className="sidebar__link"
+            onClick={closeSidebar}
+          >
             <FiHome />
             <span>For You</span>
           </Link>
 
-          <Link href="/library" className="sidebar__link">
+          <Link
+            href="/library"
+            className="sidebar__link"
+            onClick={closeSidebar}
+          >
             <FiBookOpen />
             <span>Library</span>
           </Link>
@@ -100,7 +141,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </nav>
 
         <div className="sidebar__bottom">
-          <Link href="/settings" className="sidebar__link">
+          <Link
+            href="/settings"
+            className="sidebar__link"
+            onClick={closeSidebar}
+          >
             <FiSettings />
             <span>Settings</span>
           </Link>

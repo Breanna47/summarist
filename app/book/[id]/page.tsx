@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
+import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+
 import type { Book } from "@/types/book";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+
 import AppLayout from "../../components/AppLayout";
 import AuthModal from "../../components/AuthModal";
 
@@ -17,6 +20,8 @@ export default function BookPage() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [libraryLoading, setLibraryLoading] = useState(false);
 
   const id = params.id as string;
 
@@ -37,6 +42,7 @@ export default function BookPage() {
         );
 
         const data = await response.json();
+
         setBook(data);
       } catch (error) {
         console.error("Error fetching book:", error);
@@ -49,6 +55,62 @@ export default function BookPage() {
       fetchBook();
     }
   }, [id]);
+
+  useEffect(() => {
+    const checkLibraryStatus = async () => {
+      if (!user || !book) {
+        setIsSaved(false);
+        return;
+      }
+
+      try {
+        const libraryRef = doc(db, "users", user.uid, "library", book.id);
+
+        const librarySnapshot = await getDoc(libraryRef);
+
+        setIsSaved(librarySnapshot.exists());
+      } catch (error) {
+        console.error("Error checking library:", error);
+      }
+    };
+
+    checkLibraryStatus();
+  }, [user, book]);
+
+  const handleLibrary = async () => {
+    if (!book) return;
+
+    if (!user) {
+      setIsAuthOpen(true);
+      return;
+    }
+
+    try {
+      setLibraryLoading(true);
+
+      const libraryRef = doc(db, "users", user.uid, "library", book.id);
+
+      if (isSaved) {
+        await deleteDoc(libraryRef);
+        setIsSaved(false);
+      } else {
+        await setDoc(libraryRef, {
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          subTitle: book.subTitle,
+          imageLink: book.imageLink,
+          subscriptionRequired: book.subscriptionRequired,
+        });
+
+        setIsSaved(true);
+      }
+    } catch (error) {
+      console.error("Library error:", error);
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
 
   const handleAccess = () => {
     if (!book || authLoading) return;
@@ -85,6 +147,7 @@ export default function BookPage() {
               </div>
 
               <div className="book-page__buttons">
+                <div className="skeleton skeleton__button" />
                 <div className="skeleton skeleton__button" />
                 <div className="skeleton skeleton__button" />
               </div>
@@ -148,6 +211,18 @@ export default function BookPage() {
 
                 <button className="book-page__button" onClick={handleAccess}>
                   Listen
+                </button>
+
+                <button
+                  className="book-page__button"
+                  onClick={handleLibrary}
+                  disabled={libraryLoading}
+                >
+                  {libraryLoading
+                    ? "Saving..."
+                    : isSaved
+                      ? "Remove from Library"
+                      : "Add to Library"}
                 </button>
               </div>
 
