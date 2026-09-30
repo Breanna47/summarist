@@ -2,6 +2,9 @@
 
 [View Live Demo](https://summarist-gray-six.vercel.app)
 
+<img width="1592" height="762" alt="image" src="https://github.com/user-attachments/assets/ef722ba4-421d-49ed-b5bc-24cc0c409f0e" />
+
+
 A book summary application where users can read or listen to summaries and manage a personal library.
 
 ## Features
